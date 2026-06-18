@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Literal
 
 from tiddl.providers.tidal import Limits
 from tiddl.providers.tidal import ApiError
@@ -316,6 +316,7 @@ async def download_artist_resource(
     template: str,
     track_quality: TRACK_QUALITY_LITERAL,
     video_quality: VIDEO_QUALITY_LITERAL,
+    artist_mode: Literal["albums", "legacy"] = "albums",
     singles_filter: str,
     videos_filter: str,
     raise_errors: bool,
@@ -338,7 +339,7 @@ async def download_artist_resource(
             if raise_errors:
                 raise
 
-    def get_all_albums(singles: bool):
+    def get_all_albums(filter_type: str):
         offset = 0
 
         while True:
@@ -346,7 +347,7 @@ async def download_artist_resource(
                 resource.id,
                 Limits.ARTIST_ALBUMS,
                 offset,
-                "EPSANDSINGLES" if singles else "ALBUMS",
+                filter_type,
             )
 
             for album in artist_albums.items:
@@ -403,10 +404,12 @@ async def download_artist_resource(
         get_all_videos()
 
     if videos_filter != "only":
-        if singles_filter == "include":
-            get_all_albums(False)
-            get_all_albums(True)
+        if artist_mode == "albums":
+            get_all_albums("ALBUMS")
+        elif singles_filter == "include":
+            get_all_albums("ALBUMS")
+            get_all_albums("EPSANDSINGLES")
         else:
-            get_all_albums(singles_filter == "only")
+            get_all_albums("EPSANDSINGLES" if singles_filter == "only" else "ALBUMS")
 
     await asyncio.gather(*futures)

@@ -161,6 +161,7 @@ def test_download_artist_resource_calls_album_and_video_handlers():
             template="{item.title}",
             track_quality="high",
             video_quality="fhd",
+            artist_mode="legacy",
             singles_filter="only",
             videos_filter="allow",
             raise_errors=False,
@@ -172,5 +173,44 @@ def test_download_artist_resource_calls_album_and_video_handlers():
         api_get_artist_videos.assert_any_call("77", 10, 0)
         download_album.assert_awaited_once()
         handle_item.assert_called_once()
+
+
+def test_download_artist_resource_default_downloads_albums_only_via_artist_album_endpoint():
+    async def run():
+        api_get_artist_albums = Mock(
+            side_effect=[
+                SimpleNamespace(
+                    items=[SimpleNamespace(id=1, title="Album")],
+                    limit=1,
+                    totalNumberOfItems=1,
+                )
+            ]
+        )
+        api_get_artist_videos = Mock(
+            side_effect=[
+                SimpleNamespace(items=[], limit=1, totalNumberOfItems=0),
+            ]
+        )
+        download_album = AsyncMock()
+
+        await download_artist_resource(
+            resource=TidalResource(type="artist", id="77"),
+            api_get_artist_albums=api_get_artist_albums,
+            api_get_artist_videos=api_get_artist_videos,
+            api_get_album=Mock(),
+            handle_item=AsyncMock(),
+            download_album=download_album,
+            template="{item.title}",
+            track_quality="high",
+            video_quality="fhd",
+            singles_filter="none",
+            videos_filter="none",
+            raise_errors=False,
+            log_error=Mock(),
+            log_api_error=Mock(),
+        )
+
+        api_get_artist_albums.assert_called_once_with("77", 10, 0, "ALBUMS")
+        download_album.assert_awaited_once()
 
     asyncio.run(run())

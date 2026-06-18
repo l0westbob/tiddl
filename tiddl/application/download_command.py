@@ -202,6 +202,7 @@ async def execute_download_command(
                 template=TEMPLATE or template_config.video,
                 track_quality=TRACK_QUALITY,
                 video_quality=VIDEO_QUALITY,
+                artist_mode="albums",
                 singles_filter=SINGLES_FILTER,
                 videos_filter=VIDEOS_FILTER,
                 raise_errors=RAISE_ERRORS,
