@@ -28,7 +28,7 @@ def test_download_help_shows_options():
     result = runner.invoke(app, ["download", "--help"], color=False)
 
     assert result.exit_code == 0
-    ansi_re = re.compile(r"\x1b\\[[0-9;]*[mK]")
+    ansi_re = re.compile(r"\x1b\[[0-9;]*[mK]")
     output = ansi_re.sub("", result.stdout + result.stderr)
 
     assert "--track-quality" in output
