@@ -24,9 +24,11 @@ def test_auth_help_shows_subcommands():
 
 
 def test_download_help_shows_options():
-    result = runner.invoke(app, ["download", "--help"])
+    result = runner.invoke(app, ["download", "--help"], color=False)
 
     assert result.exit_code == 0
-    assert "--track-quality" in result.stdout
-    assert "--path" in result.stdout
-    assert "--threads-count" in result.stdout
+    output = result.stdout + result.stderr
+
+    assert "--track-quality" in output
+    assert "--path" in output
+    assert "--threads-count" in output
