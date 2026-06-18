@@ -1,3 +1,5 @@
+"""Compatibility download helpers from the legacy `core.utils` path."""
+
 from requests import Session
 
 from tiddl.core.api.models import TrackStream, VideoStream

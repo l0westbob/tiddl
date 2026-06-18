@@ -1,12 +1,12 @@
 import typer
 import logging
-from rich.console import Console
 from typing_extensions import Annotated
 
-from tiddl.cli.config import APP_PATH, CONFIG
-from tiddl.cli.ctx import ContextObject, Context
+from tiddl.cli.config import CONFIG
+from tiddl.cli.const import APP_PATHS
+from tiddl.cli.ctx import Context
 from tiddl.cli.commands import register_commands
-from tiddl.core.utils.ffmpeg import is_ffmpeg_installed as ifs
+from tiddl.application.cli_app import bootstrap_cli, create_context_object
 
 log = logging.getLogger("tiddl")
 
@@ -42,19 +42,17 @@ def callback(
     log.debug(f"{VERSION=}")
     log.debug(f"{ctx.params=}")
 
-    is_ffmpeg_installed = ifs()
-    log.debug(f"{is_ffmpeg_installed=}")
-
     if DEBUG:
-        debug_path = APP_PATH / "api_debug"
+        debug_path = APP_PATHS.api_debug_dir
     else:
         debug_path = None
 
-    ctx.obj = ContextObject(
-        api_omit_cache=OMIT_CACHE, console=Console(), debug_path=debug_path
-    )
+    bootstrap = bootstrap_cli(api_omit_cache=OMIT_CACHE, debug_path=debug_path)
+    log.debug(f"{bootstrap.ffmpeg_installed=}")
 
-    if not is_ffmpeg_installed:
+    ctx.obj = create_context_object(bootstrap)
+
+    if not bootstrap.ffmpeg_installed:
         ctx.obj.console.print(
             "[yellow]WARNING ffmpeg is not installed, tiddl might not work properly, "
             + "[link=https://github.com/oskvr37/tiddl/blob/main/README.md#installation]read README.md (https://github.com/oskvr37/tiddl/blob/main/README.md#installation)[/]"

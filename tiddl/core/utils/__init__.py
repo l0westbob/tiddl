@@ -1,3 +1,5 @@
+"""Compatibility exports for utility helpers used by existing callers."""
+
 from .parse import parse_track_stream, parse_video_stream
 from .download import get_track_stream_data, get_video_stream_data
 from .format import format_template

@@ -1,9 +1,10 @@
 import typer
-from typing import cast
 from typing_extensions import Annotated
+from typing import cast
 
+from tiddl.application.resources import collect_favorites
 from tiddl.cli.ctx import Context
-from tiddl.cli.utils.resource import ResourceTypeLiteral, TidalResource
+from tiddl.cli.utils.resource import ResourceTypeLiteral
 
 
 fav_subcommand = typer.Typer()
@@ -26,20 +27,11 @@ def fav(
     Get your Tidal favorites. You can narrow them to any type of your choice.
     """
 
-    favorites = ctx.obj.api.get_favorites()
-    favorites_dict = favorites.model_dump()
+    result = collect_favorites(
+        ctx.obj.api.get_favorites(),
+        cast(list[ResourceTypeLiteral], list(TYPES)),
+    )
+    ctx.obj.resources.extend(result.resources)
 
-    stats: dict[ResourceTypeLiteral, int] = dict()
-
-    for resource_type in cast(list[ResourceTypeLiteral], TYPES):
-        resources = favorites_dict[resource_type.upper()]
-
-        stats[resource_type] = len(resources)
-
-        for resource_id in resources:
-            ctx.obj.resources.append(TidalResource(id=resource_id, type=resource_type))
-
-    ctx.obj.console.print(f"[green]Loaded {len(ctx.obj.resources)} resources")
-
-    for resource_type, count in stats.items():
-        ctx.obj.console.print(f"{resource_type.title()}s: {count}")
+    for line in result.message_lines:
+        ctx.obj.console.print(line)

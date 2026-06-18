@@ -1,9 +1,7 @@
 import typer
-from logging import getLogger
 from rich.console import Console
 
-# from typing_extensions import Annotated
-
+from tiddl.application.export import render_export_resources
 from tiddl.cli.ctx import Context
 from tiddl.cli.commands.subcommands import url_subcommand
 from tiddl.cli.commands.auth import refresh
@@ -11,7 +9,6 @@ from tiddl.cli.commands.auth import refresh
 export_command = typer.Typer(name="export")
 export_command.add_typer(url_subcommand)
 
-log = getLogger(__name__)
 console = Console()
 
 
@@ -34,7 +31,4 @@ def export_callback(ctx: Context):
     # export to single files like id.json
     # or export all in one
 
-    def handle_export():
-        console.print(ctx.obj.resources)
-
-    ctx.call_on_close(handle_export)
+    ctx.call_on_close(lambda: render_export_resources(console, ctx.obj.resources))

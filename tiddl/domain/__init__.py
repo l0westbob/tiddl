@@ -1,0 +1,85 @@
+"""Compatibility facades for stable imports from `tiddl.domain`.
+
+This module intentionally re-exports the preferred domain models from the new
+dedicated submodules and preserves previous import paths during the rewrite.
+"""
+
+from .downloads import get_existing_track_filename
+from .quality import (
+    TRACK_QUALITY_LITERAL,
+    VIDEO_QUALITY_LITERAL,
+    track_qualities,
+    video_qualities,
+)
+from .resources import (
+    ResourceTypeLiteral,
+    TidalResource,
+    Album,
+    AlbumItems,
+    AlbumItemsCredits,
+    AlbumReview,
+    Artist,
+    ArtistAlbumsItems,
+    ArtistVideosItems,
+    Favorites,
+    MixItems,
+    Playlist,
+    PlaylistItems,
+    Search,
+    SearchArtist,
+    SessionResponse,
+    StreamVideoQuality,
+    Track,
+    TrackLyrics,
+    TrackQuality,
+    TrackStream,
+    Video,
+    VideoStream,
+)
+from .templates import (
+    AlbumTemplate,
+    Explicit,
+    ItemTemplate,
+    PlaylistTemplate,
+    UserFormat,
+    format_template,
+    generate_template_data,
+)
+
+__all__ = [
+    "Album",
+    "AlbumItems",
+    "AlbumItemsCredits",
+    "AlbumReview",
+    "AlbumTemplate",
+    "ResourceTypeLiteral",
+    "Artist",
+    "ArtistAlbumsItems",
+    "ArtistVideosItems",
+    "Explicit",
+    "Favorites",
+    "ItemTemplate",
+    "MixItems",
+    "Playlist",
+    "PlaylistItems",
+    "PlaylistTemplate",
+    "TidalResource",
+    "Search",
+    "SearchArtist",
+    "SessionResponse",
+    "StreamVideoQuality",
+    "TRACK_QUALITY_LITERAL",
+    "Track",
+    "TrackLyrics",
+    "TrackQuality",
+    "TrackStream",
+    "UserFormat",
+    "VIDEO_QUALITY_LITERAL",
+    "Video",
+    "VideoStream",
+    "format_template",
+    "generate_template_data",
+    "get_existing_track_filename",
+    "track_qualities",
+    "video_qualities",
+]

@@ -1,23 +1,12 @@
-from os import environ
-from pathlib import Path
+from tiddl.infrastructure.paths import APP_DIR_NAME as _APP_DIR_NAME, ENV_KEY, AppPaths
 
 
-ENV_KEY = "TIDDL_PATH"
-APP_DIR_NAME = ".tiddl"
+APP_DIR_NAME = _APP_DIR_NAME
 
 
-def get_app_path(env_key: str = ENV_KEY) -> Path:
-    if environ.get(env_key):
-        return Path(environ[env_key])
-
-    return Path.home() / APP_DIR_NAME
+APP_PATHS = AppPaths()
+APP_PATH = APP_PATHS.root
 
 
-def create_app_path() -> Path:
-    app_path = get_app_path()
-    app_path.mkdir(exist_ok=True)
-
-    return app_path
-
-
-APP_PATH = create_app_path()
+def get_app_path(env_key: str = ENV_KEY):
+    return AppPaths(env_key=env_key).root

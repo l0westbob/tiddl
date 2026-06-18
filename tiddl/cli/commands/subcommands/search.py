@@ -1,13 +1,15 @@
 import typer
 from typing_extensions import Annotated
+from typing import cast
 
+from tiddl.application.resources import (
+    parse_search_selection,
+    prepare_search_results,
+    render_search_table,
+)
 from tiddl.cli.ctx import Context
-from tiddl.cli.utils.resource import TidalResource
-from tiddl.core.api.models.base import Search, SearchArtist
-from tiddl.core.api.models.resources import Track, Album, Playlist, Video
-
-from rich.panel import Panel
-from rich.table import Table
+from tiddl.cli.utils.resource import ResourceTypeLiteral, TidalResource
+from tiddl.core.api.models.base import Search
 
 search_subcommand = typer.Typer()
 
@@ -51,94 +53,39 @@ def search(
     """
 
     results: Search = ctx.obj.api.get_search(query=query)
-    table = _prepare_table(query)
+    results_to_display, top_hit_message = prepare_search_results(
+        query=query,
+        results=results,
+        resource_types=cast(list[ResourceTypeLiteral], resource_types),
+        number_top_results=number_top_results,
+        pick_top_hit=pick_top_hit,
+    )
 
-    results_to_display = []
-    if results.topHit is not None:
-        top_hit = results.topHit
-        top_hit_type = top_hit.type.rstrip("S").lower()  # "ARTISTS" -> "artist"
-        if top_hit_type in resource_types:
-            if pick_top_hit:
-                ctx.obj.resources.append(
-                    TidalResource.from_string(
-                        f"{top_hit_type}/{_display_id(top_hit.value)}"
-                    )
-                )
-                ctx.obj.console.print(
-                    f"[green]Automatically added top hit: {top_hit.type.title()} '{_display_name(top_hit.value)}'"
-                )
-                return
-            else:
-                results_to_display.append(
-                    (
-                        top_hit_type.title(),
-                        _display_name(top_hit.value),
-                        _display_id(top_hit.value),
-                    )
-                )
-
-    type_to_items = {
-        "artist": results.artists.items,
-        "album": results.albums.items,
-        "playlist": results.playlists.items,
-        "track": results.tracks.items,
-        "video": results.videos.items,
-    }
-
-    for resource_type, items in type_to_items.items():
-        if resource_type in resource_types:
-            results_to_display.extend(
-                (resource_type.title(), _display_name(item), _display_id(item))
-                for item in items[:number_top_results]
+    if top_hit_message is not None:
+        ctx.obj.console.print(top_hit_message)
+        if pick_top_hit:
+            top_hit = results.topHit
+            assert top_hit is not None
+            top_hit_value = top_hit.value
+            resource_id = (
+                top_hit_value.id if hasattr(top_hit_value, "id") else top_hit_value.uuid
             )
+            ctx.obj.resources.append(
+                TidalResource.from_string(
+                    f"{top_hit.type.rstrip('S').lower()}/{resource_id}"
+                )
+            )
+            return
 
-    for i, (resource_type, name, id) in enumerate(results_to_display, start=1):
-        table.add_row(str(i), resource_type, name, id)
-
-    panel = Panel(table, title="Search Results", highlight=True, expand=True)
+    panel = render_search_table(query, results_to_display)
     ctx.obj.console.print(panel)
     selection = ctx.obj.console.input(
         "[bold green]Enter the number of the resource to add to your list (comma-separated for multiple, q/empty = quit): "
     )
-    selected_numbers = [s.strip() for s in selection.split(",")]
+    selected_resources = parse_search_selection(selection, results_to_display)
 
-    for num in selected_numbers:
-        if num.lower() == "q":
-            return
-
-        if not num.isdigit() or int(num) < 1 or int(num) > len(results_to_display):
-            ctx.obj.console.print(f"[red]Invalid selection: {num}")
-            continue
-
-        selected_resource = results_to_display[int(num) - 1]
-        resource_type, name, id = selected_resource
-        ctx.obj.resources.append(
-            TidalResource.from_string(f"{resource_type.lower()}/{id}")
+    for resource in selected_resources:
+        ctx.obj.resources.append(resource)
+        ctx.obj.console.print(
+            f"[green]Added {resource.type.title()} '{resource.id}' to your list"
         )
-        ctx.obj.console.print(f"[green]Added {resource_type} '{name}' to your list")
-
-
-def _display_name(item) -> str:
-    if isinstance(item, SearchArtist):
-        return item.name
-    elif isinstance(item, Video):
-        return f"{item.artist or item.artists[0].name or ""} - {item.title}"
-    elif isinstance(item, (Track, Album)):
-        return f"{item.artist or item.artists[0].name or ""} - {item.title} [blue][{', '.join(item.audioModes)}][/]"
-    elif isinstance(item, (Playlist)):
-        return item.title
-    else:
-        raise ValueError("Unknown item type")
-
-
-def _display_id(item) -> str:
-    return item.uuid if isinstance(item, Playlist) else str(item.id)
-
-
-def _prepare_table(query: str) -> Table:
-    table = Table(title=f"{query}", expand=True)
-    table.add_column("#", style="yellow", ratio=1)
-    table.add_column("Type", style="cyan", ratio=1)
-    table.add_column("Title", style="green", ratio=8)
-    table.add_column("ID", style="magenta", ratio=2)
-    return table

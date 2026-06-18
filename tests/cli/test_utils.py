@@ -83,3 +83,13 @@ def test_url_property():
 def test_str_method():
     res = TidalResource(type="album", id="67890")
     assert str(res) == "album/67890"
+
+
+def test_invalid_url_without_resource_type():
+    with pytest.raises(ValueError, match="Invalid resource type"):
+        TidalResource.from_string("https://listen.tidal.com/")
+
+
+def test_invalid_resource_without_id():
+    with pytest.raises(ValueError, match="No resource ID found"):
+        TidalResource.from_string("album")

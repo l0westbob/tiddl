@@ -1,8 +1,11 @@
 from datetime import datetime
+from typing import Any, cast
 
-import pytest
-
-from tiddl.core.utils.format import AlbumTemplate, format_template, generate_template_data
+from tiddl.core.utils.format import (
+    AlbumTemplate,
+    format_template,
+    generate_template_data,
+)
 from tiddl.core.api.models.resources import Video
 
 
@@ -88,6 +91,23 @@ class TestFormatTemplateNoAlbum:
         )
         assert result == "Gorillaz"
 
+    def test_empty_path_segments_are_sanitized_to_fallback(self):
+        result = format_template(
+            template="{item.title}//{item.artist}",
+            item=BASE_VIDEO,
+            album=None,
+            with_asterisk_ext=False,
+        )
+
+        assert result == "My Video/_/Gorillaz"
+
+    def test_template_keeps_explicit_and_master_helpers_stable(self):
+        data = generate_template_data(item=BASE_VIDEO, album=None)
+
+        item = cast(Any, data["item"])
+        assert f"{item.explicit}" == ""
+        assert f"{item.dolby}" == ""
+
 
 class TestGenerateTemplateDataAlbumFallback:
     def test_album_template_is_never_none(self):
@@ -98,6 +118,6 @@ class TestGenerateTemplateDataAlbumFallback:
 
     def test_album_template_has_empty_fields_when_no_album(self):
         data = generate_template_data(item=BASE_VIDEO, album=None)
-        album = data["album"]
+        album = cast(Any, data["album"])
         assert album.title == ""
         assert album.artist == ""

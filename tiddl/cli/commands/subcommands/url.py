@@ -1,6 +1,7 @@
 import typer
 from typing_extensions import Annotated
 
+from tiddl.application.resources import collect_urls
 from tiddl.cli.ctx import Context
 from tiddl.cli.utils.resource import TidalResource
 
@@ -26,4 +27,5 @@ def url(
     Available resource types: track, video, album, playlist, artist, mix.
     """
 
-    ctx.obj.resources.extend(urls)
+    result = collect_urls(urls)
+    ctx.obj.resources.extend(result.resources)

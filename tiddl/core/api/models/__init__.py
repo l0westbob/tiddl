@@ -39,5 +39,5 @@ __all__ = [
     "Search",
     "SessionResponse",
     "TrackStream",
-    "VideoStream"
+    "VideoStream",
 ]

@@ -31,6 +31,10 @@ homepage = "https://github.com/oskvr37/tiddl"
 [project.scripts]
 tiddl = "tiddl.cli.app:app"
 
+[tool.setuptools.packages.find]
+include = ["tiddl*"]
+exclude = ["downloads*", "tests*", "examples*", "docs*"]
+
 [tool.coverage.run]
 omit = ["*/models/*", "*/models.py"]
 
@@ -38,4 +42,24 @@ omit = ["*/models/*", "*/models.py"]
 dev = [
     "pytest>=8.4.2",
     "pytest-mock>=3.15.1",
+    "ruff>=0.11.12",
+    "ty>=0.0.1",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+src = ["tiddl", "tests"]
+extend-exclude = [
+    ".idea",
+    ".venv",
+    ".ruff_cache",
+    ".pytest_cache",
+    "dist",
+    "downloads",
+    ".local",
+]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E501"]

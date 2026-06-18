@@ -1,10 +1,14 @@
 import typer
-from datetime import datetime
-from time import time, sleep
 from rich.console import Console
+from time import sleep, time
 
-from tiddl.cli.utils.auth.core import load_auth_data, save_auth_data, AuthData
-from tiddl.core.auth import AuthAPI, AuthClientError
+from tiddl.application.auth_flow import (
+    build_login_auth_data,
+    format_expiry_message,
+    is_token_valid,
+)
+from tiddl.cli.utils.auth.core import AuthData, load_auth_data, save_auth_data
+from tiddl.providers.tidal import AuthAPI, AuthClientError
 
 from typing_extensions import Annotated
 
@@ -20,9 +24,7 @@ auth_command = typer.Typer(
 def login(
     NO_BROWSER: Annotated[
         bool,
-        typer.Option(
-            "--no-browser", "-n", help="Do not open browser."
-        ),
+        typer.Option("--no-browser", "-n", help="Do not open browser."),
     ] = False,
 ):
     loaded_auth_data = load_auth_data()
@@ -51,13 +53,7 @@ def login(
 
             try:
                 auth = auth_api.get_auth(device_auth.deviceCode)
-                auth_data = AuthData(
-                    token=auth.access_token,
-                    refresh_token=auth.refresh_token,
-                    expires_at=auth.expires_in + int(time()),
-                    user_id=str(auth.user_id),
-                    country_code=auth.user.countryCode,
-                )
+                auth_data = build_login_auth_data(auth)
                 save_auth_data(auth_data)
                 status.console.print("[bold green]Logged in!")
                 break
@@ -140,22 +136,14 @@ def refresh(
         console.print("[bold red]Not logged in.")
         raise typer.Exit()
 
-    if time() < (loaded_auth_data.expires_at - EARLY_EXPIRE_TIME) and not FORCE:
-        expiry_time = datetime.fromtimestamp(loaded_auth_data.expires_at)
-        remaining = expiry_time - datetime.now()
-        hours, remainder = divmod(remaining.seconds, 3600)
-        minutes, _ = divmod(remainder, 60)
-        console.print(
-            f"[green]Auth token expires in {remaining.days}d {hours}h {minutes}m"
-        )
+    if is_token_valid(loaded_auth_data, EARLY_EXPIRE_TIME, FORCE):
+        console.print(format_expiry_message(loaded_auth_data))
         return
 
     auth_api = AuthAPI()
     auth_data = auth_api.refresh_token(loaded_auth_data.refresh_token)
-
     loaded_auth_data.token = auth_data.access_token
     loaded_auth_data.expires_at = auth_data.expires_in + int(time())
-
     save_auth_data(loaded_auth_data)
 
     console.print("[bold green]Auth token has been refreshed!")

@@ -40,7 +40,17 @@ pip install tiddl
 
 ## docker
 
-**coming soon**
+The container expects runtime state to live under a mounted app data directory and
+keeps config, auth, cache, temp, and logs below `TIDDL_PATH`.
+
+Example:
+
+```bash
+docker run --rm \
+  -e TIDDL_PATH=/data/tiddl \
+  -v "$PWD/.tiddl:/data/tiddl" \
+  tiddl auth login
+```
 
 # Usage
 
@@ -128,7 +138,11 @@ Music
 
 ## Configuration files
 
-Files of the app are created in your home directory. By default, the app is located at `~/.tiddl`.
+Files of the app are created in your home directory by default. The app data root is
+`~/.tiddl` unless you override it with `TIDDL_PATH`.
+
+The runtime directory contains config, auth, cache, temp, debug, and log files.
+When `TIDDL_PATH` is set, all of those paths stay below that directory.
 
 You can (and should) create the `config.toml` file to configure the app how you want.
 
@@ -161,17 +175,34 @@ git clone https://github.com/oskvr37/tiddl
 cd tiddl
 ```
 
-You should create virtual environment and activate it
+Recommended local checks:
 
 ```bash
-uv venv
-source .venv/Scripts/activate
+uv sync --dev
+uv run pytest
+uv run ruff format --check .
+uv run ruff check .
+uv run ty check
+uv run uv build
 ```
 
-Install package with `--editable` flag
+Release gate:
 
 ```bash
-uv pip install -e .
+uv run uv build
+```
+
+Docker runtime:
+
+Set `TIDDL_PATH` and mount an app-data directory so config, auth, cache, temp,
+and logs stay under the mounted directory.
+
+```bash
+docker build -t tiddl .
+docker run --rm \
+  -e TIDDL_PATH=/data/tiddl \
+  -v "$PWD/.tiddl:/data/tiddl" \
+  tiddl auth login
 ```
 
 # Resources

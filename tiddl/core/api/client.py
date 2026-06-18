@@ -1,7 +1,7 @@
 import json
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Type, TypeVar, Callable, Optional
+from typing import Any, Type, TypeVar, Callable, Optional, cast
 
 from pydantic import BaseModel
 from time import sleep
@@ -45,10 +45,13 @@ class TidalClient:
         self.session = CachedSession(
             cache_name=cache_name, always_revalidate=omit_cache
         )
-        self.session.headers = {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/json",
-        }
+        self.session.headers = cast(
+            Any,
+            {
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+        )
         self._token = token
 
     @property
