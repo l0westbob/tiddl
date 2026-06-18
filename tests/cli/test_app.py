@@ -1,4 +1,5 @@
 from typer.testing import CliRunner
+from click import unstyle
 
 from tiddl.cli.app import app
 
@@ -27,7 +28,7 @@ def test_download_help_shows_options():
     result = runner.invoke(app, ["download", "--help"], color=False)
 
     assert result.exit_code == 0
-    output = result.stdout + result.stderr
+    output = unstyle(result.stdout + result.stderr)
 
     assert "--track-quality" in output
     assert "--path" in output
