@@ -1,5 +1,7 @@
 # Tidal Downloader
 
+> This repository is a personal fork and rewrite of [oskvr37/tiddl](https://github.com/oskvr37/tiddl).
+
 Download tracks and videos from Tidal with max quality! `tiddl` is CLI app written in Python.
 
 > [!WARNING]
